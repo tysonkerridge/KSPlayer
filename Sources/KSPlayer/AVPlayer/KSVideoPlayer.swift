@@ -144,6 +144,7 @@ extension KSVideoPlayer: UIViewRepresentable {
                     self?.subtitleModel.url = url
                 }
             }
+            resetPlayer()
             if let playerLayer {
                 if playerLayer.url == url {
                     return playerLayer.player.view ?? UIView()
