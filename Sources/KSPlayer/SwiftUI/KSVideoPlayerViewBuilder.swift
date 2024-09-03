@@ -34,7 +34,10 @@ enum KSVideoPlayerViewBuilder {
         Button {
             config.isScaleAspectFill.toggle()
         } label: {
-            Image(systemName: config.isScaleAspectFill ? "rectangle.arrowtriangle.2.inward" : "rectangle.arrowtriangle.2.outward")
+            Image(systemName: config.isScaleAspectFill ? "rectangle.compress.vertical" : "rectangle.expand.vertical")
+                .foregroundColor(.white)
+                .fontWeight(.bold)
+                .font(.title2)
         }
     }
 
@@ -55,7 +58,10 @@ enum KSVideoPlayerViewBuilder {
                 Text(track.name).tag(track.subtitleID as String?)
             }
         } label: {
-            Image(systemName: "text.bubble.fill")
+            Image(systemName: "text.bubble")
+                .foregroundColor(.white)
+                .fontWeight(.bold)
+                .font(.title2)
         }
     }
 
@@ -77,8 +83,6 @@ enum KSVideoPlayerViewBuilder {
         HStack {
             Text(title)
                 .font(.title3)
-            ProgressView()
-                .opacity(config.state == .buffering ? 1 : 0)
         }
     }
 
@@ -88,6 +92,9 @@ enum KSVideoPlayerViewBuilder {
             config.isMuted.toggle()
         } label: {
             Image(systemName: config.isMuted ? speakerDisabledSystemName : speakerSystemName)
+                    .foregroundColor(.white)
+                    .fontWeight(.bold)
+                    .font(.title2)
         }
         .shadow(color: .black, radius: 1)
     }
@@ -108,35 +115,23 @@ enum KSVideoPlayerViewBuilder {
 @available(iOS 16.0, macOS 13.0, tvOS 16.0, *)
 private extension KSVideoPlayerViewBuilder {
     static var playSystemName: String {
-        #if os(xrOS)
         "play.fill"
-        #else
-        "play.circle.fill"
-        #endif
     }
 
     static var pauseSystemName: String {
-        #if os(xrOS)
         "pause.fill"
-        #else
-        "pause.circle.fill"
-        #endif
     }
 
     static var speakerSystemName: String {
         #if os(xrOS)
         "speaker.fill"
         #else
-        "speaker.wave.2.circle.fill"
+        "speaker.wave.2.fill"
         #endif
     }
 
     static var speakerDisabledSystemName: String {
-        #if os(xrOS)
         "speaker.slash.fill"
-        #else
-        "speaker.slash.circle.fill"
-        #endif
     }
 
     @MainActor
@@ -147,7 +142,9 @@ private extension KSVideoPlayerViewBuilder {
                 config.skip(interval: -15)
             } label: {
                 Image(systemName: "gobackward.15")
-                    .font(.largeTitle)
+                .resizable()
+                .frame(width: 50, height: 50, alignment: .center)
+                .foregroundColor(.white)
             }
             #if !os(tvOS)
             .keyboardShortcut(.leftArrow, modifiers: .none)
@@ -163,7 +160,9 @@ private extension KSVideoPlayerViewBuilder {
                 config.skip(interval: 15)
             } label: {
                 Image(systemName: "goforward.15")
-                    .font(.largeTitle)
+                .resizable()
+                .frame(width: 50, height: 50, alignment: .center)
+                .foregroundColor(.white)
             }
             #if !os(tvOS)
             .keyboardShortcut(.rightArrow, modifiers: .none)
@@ -180,8 +179,15 @@ private extension KSVideoPlayerViewBuilder {
                 config.playerLayer?.play()
             }
         } label: {
-            Image(systemName: config.state == .error ? "play.slash.fill" : (config.state.isPlaying ? pauseSystemName : playSystemName))
-                .font(.largeTitle)
+            if [KSPlayerState.buffering, .initialized, .preparing, .readyToPlay].contains(config.state) {
+                ProgressView()
+                .controlSize(.large)
+            } else {
+                Image(systemName: config.state == .error ? "play.slash.fill" : (config.state.isPlaying ? pauseSystemName : playSystemName))
+                    .resizable()
+                    .frame(width: 50, height: 50, alignment: .center)
+                    .foregroundColor(.white)
+            }
         }
         #if os(xrOS)
         .contentTransition(.symbolEffect(.replace))

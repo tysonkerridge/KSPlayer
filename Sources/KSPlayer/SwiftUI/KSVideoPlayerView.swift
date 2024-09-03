@@ -407,7 +407,15 @@ struct VideoControllerView: View {
                 Button {
                     dismiss()
                 } label: {
-                    Image(systemName: "x.circle.fill")
+                    RoundedRectangle(cornerRadius: 4)
+                                .fill(.white.opacity(0.2))
+                                .frame(width: 35, height: 35, alignment: .center)
+                                .overlay {
+                                    Image(systemName: "xmark")
+                                        .foregroundColor(.white)
+                                        .fontWeight(.bold)
+                                        .font(.title2)
+                                }
                 }
                 #if !os(tvOS)
                 if config.playerLayer?.player.allowsExternalPlayback == true {
@@ -416,7 +424,7 @@ struct VideoControllerView: View {
                 #endif
                 #endif
                 Spacer()
-                if let audioTracks = config.playerLayer?.player.tracks(mediaType: .audio), !audioTracks.isEmpty {
+                if let audioTracks = config.playerLayer?.player.tracks(mediaType: .audio), !audioTracks.isEmpty, audioTracks.count > 1 {
                     audioButton(audioTracks: audioTracks)
                     #if os(xrOS)
                         .aspectRatio(1, contentMode: .fit)
@@ -426,19 +434,21 @@ struct VideoControllerView: View {
                 muteButton
                 #if !os(xrOS)
                 contentModeButton
-                subtitleButton
+                if !config.subtitleModel.subtitleInfos.isEmpty {
+                    subtitleButton
+                }
                 #endif
             }
             Spacer()
             #if !os(xrOS)
             KSVideoPlayerViewBuilder.playbackControlView(config: config)
             Spacer()
-            HStack {
+            HStack(alignment: .bottom) {
                 KSVideoPlayerViewBuilder.titleView(title: title, config: config)
                 Spacer()
-                playbackRateButton
+//                playbackRateButton
                 pipButton
-                infoButton
+//                infoButton
             }
             #endif
             #endif
@@ -487,7 +497,10 @@ struct VideoControllerView: View {
                 Text(track.description).tag(track.trackID as Int32?)
             }
         } label: {
-            Image(systemName: "waveform.circle.fill")
+            Image(systemName: "waveform.and.magnifyingglass")
+                .foregroundColor(.white)
+                .fontWeight(.bold)
+                .font(.title2)
             #if os(xrOS)
                 .padding()
                 .clipShape(Circle())
@@ -507,7 +520,10 @@ struct VideoControllerView: View {
         Button {
             config.playerLayer?.isPipActive.toggle()
         } label: {
-            Image(systemName: "rectangle.on.rectangle.circle.fill")
+            Image(systemName: "pip.enter")
+                .foregroundColor(.white)
+                .fontWeight(.bold)
+                .font(.title2)
         }
     }
 
@@ -581,7 +597,15 @@ struct VideoTimeShowView: View {
             }
             .font(.system(.title2))
         } else {
-            Text("Live Streaming")
+            HStack {
+                Text("Live")
+                    .padding(.horizontal, 5)
+                    .padding(.vertical, 2)
+                    .background(
+                        RoundedRectangle(cornerRadius: 6).fill(.red)
+                    )
+                Spacer()
+            }
         }
     }
 }
