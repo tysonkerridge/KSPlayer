@@ -81,6 +81,7 @@ public struct KSVideoPlayerView: View {
                 #endif
             }
         }
+        .background(.black)
         .preferredColorScheme(.dark)
         .tint(.white)
         .persistentSystemOverlays(.hidden)

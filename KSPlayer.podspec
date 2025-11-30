@@ -1,13 +1,13 @@
 Pod::Spec.new do |s|
-    s.name             = 'KSPlayer'
-    s.version          = '1.1.0'
+    s.name             = 'KSPlayer-CustomUI'
+    s.version          = '1.1.1'
     s.summary          = 'Video Player Using Swift, based on AVPlayer,FFmpeg'
 
     s.description      = <<-DESC
     Video Player Using Swift, based on ffmpeg, support for the horizontal screen, vertical screen, the upper and lower slide to adjust the volume, the screen brightness, or so slide to adjust the playback progress.
     DESC
 
-    s.homepage         = 'https://github.com/kingslay/KSPlayer'
+    s.homepage         = 'https://github.com/arnosepe/KSPlayer-CustomUI'
     s.authors = { 'kintan' => 'kingslay@icloud.com' }
     s.license          = 'MIT'
     s.source           = { :git => 'https://github.com/kingslay/KSPlayer.git', :tag => s.version.to_s }
