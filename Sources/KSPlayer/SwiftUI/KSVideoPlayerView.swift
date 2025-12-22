@@ -366,16 +366,17 @@ struct VideoControllerView: View {
     public var body: some View {
         VStack {
             #if os(tvOS)
+            Text(title)
+                .lineLimit(2)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .layoutPriority(3)
             Spacer()
             HStack {
-                Text(title)
-                    .lineLimit(2)
-                    .layoutPriority(3)
                 ProgressView()
                     .opacity(config.state == .buffering ? 1 : 0)
                 Spacer()
                     .layoutPriority(2)
-                HStack {
+                HStack(spacing: 100) {
                     Button {
                         if config.state.isPlaying {
                             config.playerLayer?.pause()
@@ -384,23 +385,29 @@ struct VideoControllerView: View {
                         }
                     } label: {
                         Image(systemName: config.state == .error ? "play.slash.fill" : (config.state.isPlaying ? "pause.circle.fill" : "play.circle.fill"))
+                            .resizable()
+                            .scaledToFit()
+                            .frame(width: 56, height: 56)
                     }
                     .frame(width: 56)
-                    if let audioTracks = config.playerLayer?.player.tracks(mediaType: .audio), !audioTracks.isEmpty {
+                    if let audioTracks = config.playerLayer?.player.tracks(mediaType: .audio), !audioTracks.isEmpty, audioTracks.count >= 1 {
                         audioButton(audioTracks: audioTracks)
+                            .frame(width: 56)
                     }
                     muteButton
                         .frame(width: 56)
-                    contentModeButton
-                        .frame(width: 56)
+//                    contentModeButton
+//                        .frame(width: 56)
                     subtitleButton
+                        .frame(width: 56)
                     playbackRateButton
+                        .frame(width: 56)
                     pipButton
                         .frame(width: 56)
                     infoButton
                         .frame(width: 56)
                 }
-                .font(.caption)
+                .font(.body)
             }
             #else
             HStack {
@@ -499,9 +506,15 @@ struct VideoControllerView: View {
             }
         } label: {
             Image(systemName: "waveform.and.magnifyingglass")
+            #if os(tvOS)
+                .resizable()
+                .scaledToFit()
+                .frame(width: 56, height: 56)
+            #else
                 .foregroundColor(.white)
                 .fontWeight(.bold)
                 .font(.title2)
+            #endif
             #if os(xrOS)
                 .padding()
                 .clipShape(Circle())
@@ -522,9 +535,15 @@ struct VideoControllerView: View {
             config.playerLayer?.isPipActive.toggle()
         } label: {
             Image(systemName: "pip.enter")
+#if os(tvOS)
+    .resizable()
+    .scaledToFit()
+    .frame(width: 56, height: 56)
+            #else
                 .foregroundColor(.white)
                 .fontWeight(.bold)
                 .font(.title2)
+            #endif
         }
     }
 

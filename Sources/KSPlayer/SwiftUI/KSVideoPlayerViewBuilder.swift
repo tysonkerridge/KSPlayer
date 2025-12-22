@@ -59,9 +59,15 @@ enum KSVideoPlayerViewBuilder {
             }
         } label: {
             Image(systemName: "text.bubble")
+#if os(tvOS)
+                .resizable()
+                .scaledToFit()
+                .frame(width: 56, height: 56)
+#else
                 .foregroundColor(.white)
                 .fontWeight(.bold)
                 .font(.title2)
+#endif
         }
     }
 
@@ -75,6 +81,15 @@ enum KSVideoPlayerViewBuilder {
             }
         } label: {
             Image(systemName: "gauge.with.dots.needle.67percent")
+#if os(tvOS)
+                .resizable()
+                .scaledToFit()
+                .frame(width: 56, height: 56)
+#else
+                .foregroundColor(.white)
+                .fontWeight(.bold)
+                .font(.title2)
+#endif
         }
     }
 
@@ -92,9 +107,15 @@ enum KSVideoPlayerViewBuilder {
             config.isMuted.toggle()
         } label: {
             Image(systemName: config.isMuted ? speakerDisabledSystemName : speakerSystemName)
-                    .foregroundColor(.white)
-                    .fontWeight(.bold)
-                    .font(.title2)
+#if os(tvOS)
+                .resizable()
+                .scaledToFit()
+                .frame(width: 56, height: 56)
+#else
+                .foregroundColor(.white)
+                .fontWeight(.bold)
+                .font(.title2)
+#endif
         }
         .shadow(color: .black, radius: 1)
     }
@@ -104,6 +125,15 @@ enum KSVideoPlayerViewBuilder {
             showVideoSetting.wrappedValue.toggle()
         } label: {
             Image(systemName: "info.circle.fill")
+#if os(tvOS)
+                .resizable()
+                .scaledToFit()
+                .frame(width: 56, height: 56)
+#else
+                .foregroundColor(.white)
+                .fontWeight(.bold)
+                .font(.title2)
+#endif
         }
         // iOS 模拟器加keyboardShortcut会导致KSVideoPlayer.Coordinator无法释放。真机不会有这个问题
         #if !os(tvOS)
