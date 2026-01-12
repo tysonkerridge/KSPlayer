@@ -8,6 +8,52 @@ import AVFoundation
 import MediaPlayer
 import SwiftUI
 
+public extension View {
+    @ViewBuilder
+    func KSGlassEffect(cornerRadius: CGFloat = 20, blurRadius: CGFloat = 18, strokeOpacity: CGFloat = 0.25) -> some View {
+        if #available(iOS 26, *) {
+            self.glassEffect()
+        } else {
+            self
+                .background {
+                    RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
+                        .fill(.ultraThinMaterial)
+                }
+                .overlay {
+                    RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
+                        .stroke(
+                            LinearGradient(
+                                colors: [
+                                    .white.opacity(strokeOpacity),
+                                    .white.opacity(strokeOpacity * 0.2)
+                                ],
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            ),
+                            lineWidth: 1
+                        )
+                }
+                .clipShape(RoundedRectangle(cornerRadius: cornerRadius, style: .continuous))
+                .background {
+                    // Highlight top
+                    RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
+                        .stroke(
+                            LinearGradient(
+                                colors: [
+                                    .white.opacity(0.45),
+                                    .clear
+                                ],
+                                startPoint: .topLeading,
+                                endPoint: .center
+                            ),
+                            lineWidth: 1
+                        )
+                        .blendMode(.overlay)
+                }
+        }
+    }
+}
+
 @available(iOS 16.0, macOS 13.0, tvOS 16.0, *)
 @MainActor
 public struct KSVideoPlayerView: View {
