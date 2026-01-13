@@ -12,47 +12,53 @@ public extension View {
     @ViewBuilder
     func KSGlassEffect(cornerRadius: CGFloat = 20, blurRadius: CGFloat = 18, strokeOpacity: CGFloat = 0.25) -> some View {
         if #available(iOS 26, *) {
-            self.glassEffect()
+            self.glassEffect(.clear)
         } else {
-            self
-                .background {
-                    RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
-                        .fill(.ultraThinMaterial)
-                }
-                .overlay {
-                    RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
-                        .stroke(
-                            LinearGradient(
-                                colors: [
-                                    .white.opacity(strokeOpacity),
-                                    .white.opacity(strokeOpacity * 0.2)
-                                ],
-                                startPoint: .topLeading,
-                                endPoint: .bottomTrailing
-                            ),
-                            lineWidth: 1
-                        )
-                }
-                .clipShape(RoundedRectangle(cornerRadius: cornerRadius, style: .continuous))
-                .background {
-                    // Highlight top
-                    RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
-                        .stroke(
-                            LinearGradient(
-                                colors: [
-                                    .white.opacity(0.45),
-                                    .clear
-                                ],
-                                startPoint: .topLeading,
-                                endPoint: .center
-                            ),
-                            lineWidth: 1
-                        )
-                        .blendMode(.overlay)
-                }
+            if #available(iOS 15.0, *) {
+                self
+                    .background {
+                        RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
+                            .fill(.ultraThinMaterial)
+                    }
+                    .overlay {
+                        RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
+                            .stroke(
+                                LinearGradient(
+                                    colors: [
+                                        .white.opacity(strokeOpacity),
+                                        .white.opacity(strokeOpacity * 0.2)
+                                    ],
+                                    startPoint: .topLeading,
+                                    endPoint: .bottomTrailing
+                                ),
+                                lineWidth: 1
+                            )
+                    }
+                    .clipShape(RoundedRectangle(cornerRadius: cornerRadius, style: .continuous))
+                    .background {
+                        // Highlight top
+                        RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
+                            .stroke(
+                                LinearGradient(
+                                    colors: [
+                                        .white.opacity(0.45),
+                                        .clear
+                                    ],
+                                    startPoint: .topLeading,
+                                    endPoint: .center
+                                ),
+                                lineWidth: 1
+                            )
+                            .blendMode(.overlay)
+                    }
+            } else {
+                // Fallback on earlier versions
+                self
+            }
         }
     }
 }
+
 
 @available(iOS 16.0, macOS 13.0, tvOS 16.0, *)
 @MainActor
@@ -461,37 +467,62 @@ struct VideoControllerView: View {
                 Button {
                     dismiss()
                 } label: {
-                    RoundedRectangle(cornerRadius: 4)
-                                .fill(.white.opacity(0.2))
-                                .frame(width: 35, height: 35, alignment: .center)
-                                .overlay {
-                                    Image(systemName: "xmark")
-                                        .foregroundColor(.white)
-                                        .fontWeight(.bold)
-                                        .font(.title2)
-                                }
+                    Image(systemName: "xmark")
+                        .resizable()
+                        .scaledToFit()
+                        .foregroundColor(.white)
+                        .frame(width: 20, height: 20)
+                        .padding(15)
+                        .tint(.white)
                 }
-                #if !os(tvOS)
-                if config.playerLayer?.player.allowsExternalPlayback == true {
-                    AirPlayView().fixedSize()
-                }
-                #endif
+                .KSGlassEffect()
+                .padding(.trailing, 10)
                 #endif
                 Spacer()
-                if let audioTracks = config.playerLayer?.player.tracks(mediaType: .audio), !audioTracks.isEmpty, audioTracks.count > 1 {
-                    audioButton(audioTracks: audioTracks)
-                    #if os(xrOS)
-                        .aspectRatio(1, contentMode: .fit)
-                        .glassBackgroundEffect()
-                    #endif
+                if #available(iOS 26.0, *) {
+                    GlassEffectContainer(spacing: 30) {
+                        HStack(spacing: 15) {
+                            if let audioTracks = config.playerLayer?.player.tracks(mediaType: .audio), !audioTracks.isEmpty, audioTracks.count > 1 {
+                                audioButton(audioTracks: audioTracks)
+#if os(xrOS)
+                                    .aspectRatio(1, contentMode: .fit)
+                                    .glassBackgroundEffect()
+#endif
+                            }
+                            muteButton
+#if !os(xrOS)
+#if !os(tvOS)
+                            if config.playerLayer?.player.allowsExternalPlayback == true {
+                                AirPlayView().fixedSize()
+                            }
+#endif
+                            contentModeButton
+                            if !config.subtitleModel.subtitleInfos.isEmpty {
+                                subtitleButton
+                            }
+#endif
+                        }
+                        .padding(10)
+                        .padding(.horizontal, 15)
+                    }
+                    .KSGlassEffect()
+                } else {
+                    // Fallback on earlier versions
+                    if let audioTracks = config.playerLayer?.player.tracks(mediaType: .audio), !audioTracks.isEmpty, audioTracks.count > 1 {
+                        audioButton(audioTracks: audioTracks)
+#if os(xrOS)
+                            .aspectRatio(1, contentMode: .fit)
+                            .glassBackgroundEffect()
+#endif
+                    }
+                    muteButton
+#if !os(xrOS)
+                    contentModeButton
+                    if !config.subtitleModel.subtitleInfos.isEmpty {
+                        subtitleButton
+                    }
+#endif
                 }
-                muteButton
-                #if !os(xrOS)
-                contentModeButton
-                if !config.subtitleModel.subtitleInfos.isEmpty {
-                    subtitleButton
-                }
-                #endif
             }
             Spacer()
             #if !os(xrOS)

@@ -18,13 +18,26 @@ enum KSVideoPlayerViewBuilder {
             playButton(config: config)
             forwardButton(config: config)
             #else
-            Spacer()
-            backwardButton(config: config)
-            Spacer()
-            playButton(config: config)
-            Spacer()
-            forwardButton(config: config)
-            Spacer()
+            if #available(iOS 26.0, *) {
+                Spacer()
+                GlassEffectContainer(spacing: spacing) {
+                    HStack(spacing: -10) {
+                        backwardButton(config: config)
+                        playButton(config: config)
+                        forwardButton(config: config)
+                    }
+                }
+                Spacer()
+            } else {
+                // Fallback on earlier versions
+                Spacer()
+                backwardButton(config: config)
+                Spacer()
+                playButton(config: config)
+                Spacer()
+                forwardButton(config: config)
+                Spacer()
+            }
             #endif
         }
     }
@@ -175,7 +188,9 @@ private extension KSVideoPlayerViewBuilder {
                 .resizable()
                 .frame(width: 50, height: 50, alignment: .center)
                 .foregroundColor(.white)
+                .padding(15)
             }
+            .KSGlassEffect()
             #if !os(tvOS)
             .keyboardShortcut(.leftArrow, modifiers: .none)
             #endif
@@ -193,7 +208,9 @@ private extension KSVideoPlayerViewBuilder {
                 .resizable()
                 .frame(width: 50, height: 50, alignment: .center)
                 .foregroundColor(.white)
+                .padding(15)
             }
+            .KSGlassEffect()
             #if !os(tvOS)
             .keyboardShortcut(.rightArrow, modifiers: .none)
             #endif
@@ -217,8 +234,11 @@ private extension KSVideoPlayerViewBuilder {
                     .resizable()
                     .frame(width: 50, height: 50, alignment: .center)
                     .foregroundColor(.white)
+                    .padding(15)
             }
         }
+        .KSGlassEffect()
+        
         #if os(xrOS)
         .contentTransition(.symbolEffect(.replace))
         #endif
