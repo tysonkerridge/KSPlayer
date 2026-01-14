@@ -130,6 +130,7 @@ public protocol SubtitleInfo: KSSubtitleProtocol, AnyObject, Hashable, Identifia
     var subtitleID: String { get }
     var name: String { get }
     var delay: TimeInterval { get set }
+    var languageCode: String? { get }
     //    var userInfo: NSMutableDictionary? { get set }
     //    var subtitleDataSouce: SubtitleDataSouce? { get set }
 //    var comment: String? { get }
@@ -142,6 +143,13 @@ public extension SubtitleInfo {
         hasher.combine(subtitleID)
     }
 
+    var display: String {
+        let lang = languageCode.flatMap {
+            Locale.current.localizedString(forLanguageCode: $0)
+        } ?? languageCode ?? name
+        return "\(lang)\(languageCode != name ? " - \(name)" : "")"
+    }
+    
     static func == (lhs: Self, rhs: Self) -> Bool {
         lhs.subtitleID == rhs.subtitleID
     }
@@ -290,7 +298,11 @@ open class SubtitleModel: ObservableObject {
     public static var audioRecognizes = [any AudioRecognize]()
     private var subtitleDataSouces: [SubtitleDataSouce] = KSOptions.subtitleDataSouces
     @Published
-    public private(set) var subtitleInfos = [any SubtitleInfo]()
+    public private(set) var subtitleInfos = [any SubtitleInfo]() {
+        didSet {
+            print("DEBUG => set subtitleInfos: \(subtitleInfos)")
+        }
+    }
     @Published
     public private(set) var parts = [SubtitlePart]()
     public var subtitleDelay = 0.0 // s

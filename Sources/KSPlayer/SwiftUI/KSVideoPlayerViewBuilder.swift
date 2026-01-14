@@ -74,7 +74,7 @@ enum KSVideoPlayerViewBuilder {
         }) {
             Text("Off").tag(nil as String?)
             ForEach(config.subtitleModel.subtitleInfos, id: \.subtitleID) { track in
-                Text(track.name).tag(track.subtitleID as String?)
+                Text(track.display).tag(track.subtitleID as String?)
             }
         } label: {
             Image(systemName: "text.bubble")
@@ -148,7 +148,8 @@ enum KSVideoPlayerViewBuilder {
                 .font(.title2)
 #endif
         }
-        .shadow(color: .black, radius: 1)
+        .padding(12)
+        .KSGlassEffect()
     }
 
     static func infoButton(showVideoSetting: Binding<Bool>) -> some View {

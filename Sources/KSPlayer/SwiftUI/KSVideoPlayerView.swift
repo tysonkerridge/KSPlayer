@@ -497,17 +497,16 @@ struct VideoControllerView: View {
                                     .glassBackgroundEffect()
 #endif
                             }
-                            muteButton
 #if !os(xrOS)
 #if !os(tvOS)
                             if config.playerLayer?.player.allowsExternalPlayback == true {
                                 AirPlayView().fixedSize()
                             }
 #endif
-                            contentModeButton
                             if !config.subtitleModel.subtitleInfos.isEmpty {
                                 subtitleButton
                             }
+                            contentModeButton
 #endif
                         }
                         .padding(10)
@@ -523,7 +522,6 @@ struct VideoControllerView: View {
                             .glassBackgroundEffect()
 #endif
                     }
-                    muteButton
 #if !os(xrOS)
                     contentModeButton
                     if !config.subtitleModel.subtitleInfos.isEmpty {
@@ -544,6 +542,7 @@ struct VideoControllerView: View {
             KSVideoPlayerViewBuilder.playbackControlView(config: config)
             Spacer()
             HStack(alignment: .bottom) {
+                muteButton
                 Spacer()
                 if #available(iOS 26.0, *) {
                     GlassEffectContainer(spacing: 30) {
@@ -609,10 +608,10 @@ struct VideoControllerView: View {
             }
         }) {
             ForEach(audioTracks, id: \.trackID) { track in
-                Text(track.description).tag(track.trackID as Int32?)
+                Text("\(track.name) - \(track.language ?? track.languageCode ?? "")").tag(track.trackID as Int32?)
             }
         } label: {
-            Image(systemName: "waveform.and.magnifyingglass")
+            Image(systemName: "waveform")
             #if os(tvOS)
                 .resizable()
                 .scaledToFit()
