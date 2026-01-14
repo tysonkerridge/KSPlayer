@@ -71,6 +71,7 @@ open class KSOptions {
     public var audioFilters = [String]()
     public var syncDecodeAudio = false
     // sutile
+    public var updateTitle = false
     public var autoSelectEmbedSubtitle = true
     public var isSeekImageSubtitle = false
     // video

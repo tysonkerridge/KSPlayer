@@ -23,8 +23,14 @@ enum KSVideoPlayerViewBuilder {
                 GlassEffectContainer(spacing: spacing) {
                     HStack(spacing: -10) {
                         backwardButton(config: config)
+                            .opacity(config.isMaskShow ? 1.0 : 0)
+                            .offset(x: config.isMaskShow ? 0 : 50)
+                            .animation(.easeInOut(duration: 0.25), value: config.isMaskShow)
                         playButton(config: config)
                         forwardButton(config: config)
+                            .opacity(config.isMaskShow ? 1.0 : 0)
+                            .offset(x: config.isMaskShow ? 0 : -50)
+                            .animation(.easeInOut(duration: 0.25), value: config.isMaskShow)
                     }
                 }
                 Spacer()
@@ -111,6 +117,18 @@ enum KSVideoPlayerViewBuilder {
         HStack {
             Text(title)
                 .font(.title3)
+                .foregroundColor(.white)
+                .shadow(color: .black, radius: 5, x: 0, y: 0)
+        }
+    }
+    
+    @MainActor
+    static func subtitleView(title: String, config: KSVideoPlayer.Coordinator) -> some View {
+        HStack {
+            Text(title)
+                .font(.callout)
+                .foregroundColor(.gray)
+                .shadow(color: .black, radius: 5, x: 0, y: 0)
         }
     }
 
@@ -186,9 +204,9 @@ private extension KSVideoPlayerViewBuilder {
             } label: {
                 Image(systemName: "gobackward.15")
                 .resizable()
-                .frame(width: 50, height: 50, alignment: .center)
+                .frame(width: 25, height: 25, alignment: .center)
                 .foregroundColor(.white)
-                .padding(15)
+                .padding(10)
             }
             .KSGlassEffect()
             #if !os(tvOS)
@@ -206,9 +224,9 @@ private extension KSVideoPlayerViewBuilder {
             } label: {
                 Image(systemName: "goforward.15")
                 .resizable()
-                .frame(width: 50, height: 50, alignment: .center)
+                .frame(width: 25, height: 25, alignment: .center)
                 .foregroundColor(.white)
-                .padding(15)
+                .padding(10)
             }
             .KSGlassEffect()
             #if !os(tvOS)
@@ -228,13 +246,16 @@ private extension KSVideoPlayerViewBuilder {
         } label: {
             if [KSPlayerState.buffering, .initialized, .preparing, .readyToPlay].contains(config.state) {
                 ProgressView()
-                .controlSize(.large)
+                .controlSize(.regular)
+                .frame(width: 40, height: 40, alignment: .center)
+                .foregroundColor(.white)
+                .padding(20)
             } else {
                 Image(systemName: config.state == .error ? "play.slash.fill" : (config.state.isPlaying ? pauseSystemName : playSystemName))
                     .resizable()
-                    .frame(width: 50, height: 50, alignment: .center)
+                    .frame(width: 40, height: 40, alignment: .center)
                     .foregroundColor(.white)
-                    .padding(15)
+                    .padding(20)
             }
         }
         .KSGlassEffect()

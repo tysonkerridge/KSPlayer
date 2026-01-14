@@ -66,6 +66,7 @@ public struct KSVideoPlayerView: View {
     private let subtitleDataSouce: SubtitleDataSouce?
     @State
     private var title: String
+    private var subtitle: String?
     @StateObject
     private var playerCoordinator: KSVideoPlayer.Coordinator
     @Environment(\.dismiss)
@@ -91,18 +92,19 @@ public struct KSVideoPlayerView: View {
         }
     }
 
-    public init(url: URL, options: KSOptions, title: String? = nil) {
-        self.init(coordinator: KSVideoPlayer.Coordinator(), url: url, options: options, title: title, subtitleDataSouce: nil)
+    public init(url: URL, options: KSOptions, title: String? = nil, subtitle: String? = nil) {
+        self.init(coordinator: KSVideoPlayer.Coordinator(), url: url, options: options, title: title, subtitle: subtitle, subtitleDataSouce: nil)
     }
 
-    public init(coordinator: KSVideoPlayer.Coordinator, url: URL, options: KSOptions, title: String? = nil, subtitleDataSouce: SubtitleDataSouce? = nil) {
-        self.init(coordinator: coordinator, url: .init(wrappedValue: url), options: options, title: .init(wrappedValue: title ?? url.lastPathComponent), subtitleDataSouce: subtitleDataSouce)
+    public init(coordinator: KSVideoPlayer.Coordinator, url: URL, options: KSOptions, title: String? = nil, subtitle: String? = nil, subtitleDataSouce: SubtitleDataSouce? = nil) {
+        self.init(coordinator: coordinator, url: .init(wrappedValue: url), options: options, title: .init(wrappedValue: title ?? url.lastPathComponent), subtitle: subtitle, subtitleDataSouce: subtitleDataSouce)
     }
 
-    public init(coordinator: KSVideoPlayer.Coordinator, url: State<URL>, options: KSOptions, title: State<String>, subtitleDataSouce: SubtitleDataSouce?) {
+    public init(coordinator: KSVideoPlayer.Coordinator, url: State<URL>, options: KSOptions, title: State<String>, subtitle: String?, subtitleDataSouce: SubtitleDataSouce?) {
         _url = url
         _playerCoordinator = .init(wrappedValue: coordinator)
         _title = title
+        self.subtitle = subtitle
         #if os(macOS)
         NSDocumentController.shared.noteNewRecentDocumentURL(url.wrappedValue)
         #endif
@@ -164,7 +166,7 @@ public struct KSVideoPlayerView: View {
     private var playView: some View {
         KSVideoPlayer(coordinator: playerCoordinator, url: url, options: options)
             .onStateChanged { playerLayer, state in
-                if state == .readyToPlay {
+                if state == .readyToPlay && options.updateTitle == true {
                     if let movieTitle = playerLayer.player.dynamicInfo?.metadata["title"] {
                         title = movieTitle
                     }
@@ -243,8 +245,10 @@ public struct KSVideoPlayerView: View {
         }
         #else
         .onTapGesture {
+            withAnimation {
                 playerCoordinator.isMaskShow.toggle()
             }
+        }
         #endif
         #if os(tvOS)
             .onMoveCommand { direction in
@@ -263,22 +267,24 @@ public struct KSVideoPlayerView: View {
         }
         #else
         .onHover { _ in
+            withAnimation {
                 playerCoordinator.isMaskShow = true
             }
-            .onDrop(of: ["public.file-url"], isTargeted: nil) { providers -> Bool in
-                providers.first?.loadDataRepresentation(forTypeIdentifier: "public.file-url") { data, _ in
-                    if let data, let path = NSString(data: data, encoding: 4), let url = URL(string: path as String) {
-                        openURL(url)
-                    }
+        }
+        .onDrop(of: ["public.file-url"], isTargeted: nil) { providers -> Bool in
+            providers.first?.loadDataRepresentation(forTypeIdentifier: "public.file-url") { data, _ in
+                if let data, let path = NSString(data: data, encoding: 4), let url = URL(string: path as String) {
+                    openURL(url)
                 }
-                return true
             }
+            return true
+        }
         #endif
     }
 
     private func controllerView(playerWidth: Double) -> some View {
-        VStack {
-            VideoControllerView(config: playerCoordinator, subtitleModel: playerCoordinator.subtitleModel, title: $title, volumeSliderSize: playerWidth / 4)
+        VStack(spacing: 30) {
+            VideoControllerView(config: playerCoordinator, subtitleModel: playerCoordinator.subtitleModel, title: $title, subtitle: subtitle, volumeSliderSize: playerWidth / 4)
             #if !os(xrOS)
             // 设置opacity为0，还是会去更新View。所以只能这样了
             if playerCoordinator.isMaskShow {
@@ -309,6 +315,7 @@ public struct KSVideoPlayerView: View {
         #endif
         .focused($focusableField, equals: .controller)
         .opacity(playerCoordinator.isMaskShow ? 1 : 0)
+        .animation(.easeInOut(duration: 0.25), value: playerCoordinator.isMaskShow)
         .padding()
     }
 
@@ -410,6 +417,7 @@ struct VideoControllerView: View {
     fileprivate var subtitleModel: SubtitleModel
     @Binding
     fileprivate var title: String
+    fileprivate var subtitle: String?
     fileprivate var volumeSliderSize: Double?
     @State
     private var showVideoSetting = false
@@ -524,16 +532,38 @@ struct VideoControllerView: View {
 #endif
                 }
             }
+            VStack(alignment: .leading) {
+                KSVideoPlayerViewBuilder.titleView(title: title, config: config)
+                if let subtitle {
+                    KSVideoPlayerViewBuilder.subtitleView(title: subtitle, config: config)
+                }
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
             Spacer()
             #if !os(xrOS)
             KSVideoPlayerViewBuilder.playbackControlView(config: config)
             Spacer()
             HStack(alignment: .bottom) {
-                KSVideoPlayerViewBuilder.titleView(title: title, config: config)
                 Spacer()
-//                playbackRateButton
-                pipButton
-//                infoButton
+                if #available(iOS 26.0, *) {
+                    GlassEffectContainer(spacing: 30) {
+                        HStack(spacing: 15) {
+                            playbackRateButton
+                            pipButton
+//                            infoButton
+                        }
+                        .padding(10)
+                        .padding(.horizontal, 15)
+                    }
+                    .KSGlassEffect()
+                } else {
+                    HStack(alignment: .bottom) {
+                        Spacer()
+                        playbackRateButton
+                        pipButton
+//                        infoButton
+                    }
+                }
             }
             #endif
             #endif
