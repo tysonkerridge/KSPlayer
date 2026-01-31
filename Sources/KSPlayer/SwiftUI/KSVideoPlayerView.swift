@@ -284,8 +284,8 @@ public struct KSVideoPlayerView: View {
 
     private func controllerView(playerWidth: Double) -> some View {
         VStack(spacing: 30) {
-            VideoControllerView(config: playerCoordinator, subtitleModel: playerCoordinator.subtitleModel, title: $title, subtitle: subtitle, volumeSliderSize: playerWidth / 4)
-            #if !os(xrOS)
+            VideoControllerView(config: playerCoordinator, subtitleModel: playerCoordinator.subtitleModel, playerCoordinator: playerCoordinator, focusableField: $focusableField, title: $title, subtitle: subtitle, volumeSliderSize: playerWidth / 4)
+            #if os(tvOS)
             // 设置opacity为0，还是会去更新View。所以只能这样了
             if playerCoordinator.isMaskShow {
                 VideoTimeShowView(config: playerCoordinator, model: playerCoordinator.timemodel)
@@ -357,10 +357,6 @@ public struct KSVideoPlayerView: View {
         }
     }
 
-    fileprivate enum FocusableField {
-        case play, controller, info
-    }
-
     public func openURL(_ url: URL) {
         runOnMainThread {
             if url.isSubtitle {
@@ -372,6 +368,10 @@ public struct KSVideoPlayerView: View {
             }
         }
     }
+}
+
+public enum FocusableField {
+    case play, controller, info
 }
 
 extension View {
@@ -415,6 +415,9 @@ struct VideoControllerView: View {
     fileprivate var config: KSVideoPlayer.Coordinator
     @ObservedObject
     fileprivate var subtitleModel: SubtitleModel
+    @StateObject
+    fileprivate var playerCoordinator: KSVideoPlayer.Coordinator
+    @FocusState.Binding var focusableField: FocusableField?
     @Binding
     fileprivate var title: String
     fileprivate var subtitle: String?
@@ -470,26 +473,63 @@ struct VideoControllerView: View {
                 .font(.body)
             }
             #else
-            HStack {
+            VStack(alignment: .center) {
+                Spacer()
                 #if !os(xrOS)
-                Button {
-                    dismiss()
-                } label: {
-                    Image(systemName: "xmark")
-                        .resizable()
-                        .scaledToFit()
-                        .foregroundColor(.white)
-                        .frame(width: 20, height: 20)
-                        .padding(15)
-                        .tint(.white)
-                }
-                .KSGlassEffect()
-                .padding(.trailing, 10)
+                KSVideoPlayerViewBuilder.playbackControlView(config: config)
+                #else
+                EmptyView()
                 #endif
                 Spacer()
-                if #available(iOS 26.0, *) {
-                    GlassEffectContainer(spacing: 30) {
-                        HStack(spacing: 15) {
+            }
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .overlay(alignment: .top) {
+                VStack {
+                    HStack {
+#if !os(xrOS)
+                        Button {
+                            dismiss()
+                        } label: {
+                            Image(systemName: "xmark")
+                                .resizable()
+                                .scaledToFit()
+                                .foregroundColor(.white)
+                                .frame(width: 20, height: 20)
+                                .padding(15)
+                                .tint(.white)
+                        }
+                        .KSGlassEffect()
+                        .padding(.trailing, 10)
+#endif
+                        Spacer()
+                        if #available(iOS 26.0, *) {
+                            GlassEffectContainer(spacing: 30) {
+                                HStack(spacing: 15) {
+                                    if let audioTracks = config.playerLayer?.player.tracks(mediaType: .audio), !audioTracks.isEmpty, audioTracks.count > 1 {
+                                        audioButton(audioTracks: audioTracks)
+#if os(xrOS)
+                                            .aspectRatio(1, contentMode: .fit)
+                                            .glassBackgroundEffect()
+#endif
+                                    }
+#if !os(xrOS)
+#if !os(tvOS)
+                                    if config.playerLayer?.player.allowsExternalPlayback == true {
+                                        AirPlayView().fixedSize()
+                                    }
+#endif
+                                    if !config.subtitleModel.subtitleInfos.isEmpty {
+                                        subtitleButton
+                                    }
+                                    contentModeButton
+#endif
+                                }
+                                .padding(10)
+                                .padding(.horizontal, 15)
+                            }
+                            .KSGlassEffect()
+                        } else {
+                            // Fallback on earlier versions
                             if let audioTracks = config.playerLayer?.player.tracks(mediaType: .audio), !audioTracks.isEmpty, audioTracks.count > 1 {
                                 audioButton(audioTracks: audioTracks)
 #if os(xrOS)
@@ -498,73 +538,60 @@ struct VideoControllerView: View {
 #endif
                             }
 #if !os(xrOS)
-#if !os(tvOS)
-                            if config.playerLayer?.player.allowsExternalPlayback == true {
-                                AirPlayView().fixedSize()
-                            }
-#endif
+                            contentModeButton
                             if !config.subtitleModel.subtitleInfos.isEmpty {
                                 subtitleButton
                             }
-                            contentModeButton
 #endif
                         }
-                        .padding(10)
-                        .padding(.horizontal, 15)
                     }
-                    .KSGlassEffect()
-                } else {
-                    // Fallback on earlier versions
-                    if let audioTracks = config.playerLayer?.player.tracks(mediaType: .audio), !audioTracks.isEmpty, audioTracks.count > 1 {
-                        audioButton(audioTracks: audioTracks)
-#if os(xrOS)
-                            .aspectRatio(1, contentMode: .fit)
-                            .glassBackgroundEffect()
-#endif
-                    }
-#if !os(xrOS)
-                    contentModeButton
-                    if !config.subtitleModel.subtitleInfos.isEmpty {
-                        subtitleButton
-                    }
-#endif
-                }
-            }
-            VStack(alignment: .leading) {
-                KSVideoPlayerViewBuilder.titleView(title: title, config: config)
-                if let subtitle {
-                    KSVideoPlayerViewBuilder.subtitleView(title: subtitle, config: config)
-                }
-            }
-            .frame(maxWidth: .infinity, alignment: .leading)
-            Spacer()
-            #if !os(xrOS)
-            KSVideoPlayerViewBuilder.playbackControlView(config: config)
-            Spacer()
-            HStack(alignment: .bottom) {
-                muteButton
-                Spacer()
-                if #available(iOS 26.0, *) {
-                    GlassEffectContainer(spacing: 30) {
-                        HStack(spacing: 15) {
-                            playbackRateButton
-                            pipButton
-//                            infoButton
+                    VStack(alignment: .leading) {
+                        KSVideoPlayerViewBuilder.titleView(title: title, config: config)
+                        if let subtitle {
+                            KSVideoPlayerViewBuilder.subtitleView(title: subtitle, config: config)
                         }
-                        .padding(10)
-                        .padding(.horizontal, 15)
                     }
-                    .KSGlassEffect()
-                } else {
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                }
+            }
+            .overlay(alignment: .bottom) {
+                #if !os(xrOS)
+                VStack {
                     HStack(alignment: .bottom) {
+                        muteButton
                         Spacer()
-                        playbackRateButton
-                        pipButton
-//                        infoButton
+                        if #available(iOS 26.0, *) {
+                            GlassEffectContainer(spacing: 30) {
+                                HStack(spacing: 15) {
+                                    playbackRateButton
+                                    pipButton
+                                    //                            infoButton
+                                }
+                                .padding(10)
+                                .padding(.horizontal, 15)
+                            }
+                            .KSGlassEffect()
+                        } else {
+                            HStack(alignment: .bottom) {
+                                Spacer()
+                                playbackRateButton
+                                pipButton
+                                //                        infoButton
+                            }
+                        }
+                    }
+                    if playerCoordinator.isMaskShow {
+                        VideoTimeShowView(config: playerCoordinator, model: playerCoordinator.timemodel)
+                            .onAppear {
+                                focusableField = .controller
+                            }
+                            .onDisappear {
+                                focusableField = .play
+                            }
                     }
                 }
+                #endif
             }
-            #endif
             #endif
         }
         #if !os(tvOS)
