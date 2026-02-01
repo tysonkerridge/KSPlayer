@@ -124,6 +124,7 @@ public struct KSVideoPlayerView: View {
                 }
                 .padding()
                 controllerView(playerWidth: proxy.size.width)
+                    .padding(.bottom, 5)
                 #if os(tvOS)
                     .ignoresSafeArea()
                 #endif
@@ -180,7 +181,7 @@ public struct KSVideoPlayerView: View {
                 playerCoordinator.isMaskShow = true
             }
         #endif
-            .ignoresSafeArea()
+            .ignoresSafeArea(.all, edges: playerCoordinator.isFullscreen ? .all : .horizontal)
             .onAppear {
                 focusableField = .play
                 if let subtitleDataSouce {
@@ -284,7 +285,7 @@ public struct KSVideoPlayerView: View {
 
     private func controllerView(playerWidth: Double) -> some View {
         VStack(spacing: 30) {
-            VideoControllerView(config: playerCoordinator, subtitleModel: playerCoordinator.subtitleModel, playerCoordinator: playerCoordinator, focusableField: $focusableField, title: $title, subtitle: subtitle, volumeSliderSize: playerWidth / 4)
+            VideoControllerView(config: playerCoordinator, subtitleModel: playerCoordinator.subtitleModel, playerCoordinator: playerCoordinator, focusableField: $focusableField, title: $title, subtitle: subtitle, volumeSliderSize: playerWidth / 4, inline: options.inline)
             #if os(tvOS)
             // 设置opacity为0，还是会去更新View。所以只能这样了
             if playerCoordinator.isMaskShow {
@@ -422,6 +423,7 @@ struct VideoControllerView: View {
     fileprivate var title: String
     fileprivate var subtitle: String?
     fileprivate var volumeSliderSize: Double?
+    var inline: Bool = false
     @State
     private var showVideoSetting = false
     @Environment(\.dismiss)
@@ -563,8 +565,13 @@ struct VideoControllerView: View {
                         if #available(iOS 26.0, *) {
                             GlassEffectContainer(spacing: 30) {
                                 HStack(spacing: 15) {
-                                    playbackRateButton
+                                    if config.playerLayer?.player.seekable ?? false {
+                                        playbackRateButton
+                                    }
                                     pipButton
+                                    if inline {
+                                        fullscreenButton
+                                    }
                                     //                            infoButton
                                 }
                                 .padding(10)
@@ -574,8 +581,13 @@ struct VideoControllerView: View {
                         } else {
                             HStack(alignment: .bottom) {
                                 Spacer()
-                                playbackRateButton
+                                if config.playerLayer?.player.seekable ?? false {
+                                    playbackRateButton
+                                }
                                 pipButton
+                                if inline {
+                                    fullscreenButton
+                                }
                                 //                        infoButton
                             }
                         }
@@ -679,6 +691,17 @@ struct VideoControllerView: View {
             #endif
         }
     }
+    
+    private var fullscreenButton: some View {
+        Button {
+            config.isFullscreen.toggle()
+        } label: {
+            Image(systemName: config.isFullscreen ? "arrow.down.right.and.arrow.up.left.rectangle" : "arrow.up.left.and.arrow.down.right.rectangle")
+                .foregroundColor(.white)
+                .fontWeight(.bold)
+                .font(.title2)
+        }
+    }
 
     private var infoButton: some View {
         KSVideoPlayerViewBuilder.infoButton(showVideoSetting: $showVideoSetting)
@@ -752,6 +775,7 @@ struct VideoTimeShowView: View {
         } else {
             HStack {
                 Text("Live")
+                    .font(.headline)
                     .padding(.horizontal, 5)
                     .padding(.vertical, 2)
                     .background(

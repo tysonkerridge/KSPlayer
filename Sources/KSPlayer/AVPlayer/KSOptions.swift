@@ -76,6 +76,7 @@ open class KSOptions {
     public var isSeekImageSubtitle = false
     // video
     public var display = DisplayEnum.plane
+    public var inline: Bool = false
     public var videoDelay = 0.0 // s
     public var autoDeInterlace = false
     public var autoRotate = true
