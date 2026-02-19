@@ -536,8 +536,15 @@ public extension KSOptions {
                 channelCount = minChannels
             }
             #else
-            // iOS 外放是会自动有空间音频功能，但是蓝牙耳机有可能没有空间音频功能或者把空间音频给关了，。所以还是需要处理。
-            if !isSpatialAudioEnabled {
+            // If the hardware only supports 2 channels, always downmix to stereo.
+            // isSpatialAudioEnabled can report true even when the output can't
+            // properly render multichannel (e.g. phone speaker, some BT headphones),
+            // causing the center channel (dialogue) to be lost.
+            KSLog("[audio] DOWNMIX CHECK: maxOut=\(maximumOutputNumberOfChannels) spatial=\(isSpatialAudioEnabled) input=\(channelCount)")
+            if maximumOutputNumberOfChannels <= 2 {
+                channelCount = 2
+                KSLog("[audio] FORCED STEREO DOWNMIX: maxOutputChannels=\(maximumOutputNumberOfChannels)")
+            } else if !isSpatialAudioEnabled {
                 channelCount = minChannels
             }
             #endif
