@@ -55,7 +55,7 @@ enum KSVideoPlayerViewBuilder {
                 Text(track.name).tag(track.subtitleID as String?)
             }
         } label: {
-            Image(systemName: "text.bubble.fill")
+            Image(systemName: "captions.bubble.fill")
         }
     }
 
@@ -68,7 +68,7 @@ enum KSVideoPlayerViewBuilder {
                 Text(text).tag(value)
             }
         } label: {
-            Image(systemName: "gauge.with.dots.needle.67percent")
+            Image(systemName: "speedometer")
         }
     }
 

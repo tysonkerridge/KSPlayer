@@ -172,6 +172,14 @@ public class PlayerToolBar: UIStackView {
             videoSwitchButton.setImage(UIImage(systemName: "video.badge.ellipsis"), for: .normal)
             playbackRateButton.setImage(UIImage(systemName: "speedometer"), for: .normal)
         }
+        // Set initial tint colors for all buttons
+        playButton.tintColor = .white
+        playbackRateButton.tintColor = .white
+        definitionButton.tintColor = .white
+        audioSwitchButton.tintColor = .white
+        videoSwitchButton.tintColor = .white
+        srtButton.tintColor = .white
+        pipButton.tintColor = .white
         playButton.translatesAutoresizingMaskIntoConstraints = false
         srtButton.translatesAutoresizingMaskIntoConstraints = false
         translatesAutoresizingMaskIntoConstraints = false
@@ -186,13 +194,6 @@ public class PlayerToolBar: UIStackView {
         audioSwitchButton.fillImage()
         videoSwitchButton.fillImage()
         playbackRateButton.fillImage()
-        playButton.tintColor = .white
-        playbackRateButton.tintColor = .white
-        definitionButton.tintColor = .white
-        audioSwitchButton.tintColor = .white
-        videoSwitchButton.tintColor = .white
-        srtButton.tintColor = .white
-        pipButton.tintColor = .white
         timeSlider.tintColor = .white
         NSLayoutConstraint.activate([
             playButton.widthAnchor.constraint(equalTo: playButton.heightAnchor),
@@ -205,14 +206,6 @@ public class PlayerToolBar: UIStackView {
             heightAnchor.constraint(equalToConstant: 40),
         ])
         #else
-        timeSlider.tintColor = .white
-        playButton.tintColor = .white
-        playbackRateButton.tintColor = .white
-        definitionButton.tintColor = .white
-        audioSwitchButton.tintColor = .white
-        videoSwitchButton.tintColor = .white
-        srtButton.tintColor = .white
-        pipButton.tintColor = .white
         NSLayoutConstraint.activate([
             playButton.widthAnchor.constraint(equalToConstant: 30),
             heightAnchor.constraint(equalToConstant: 49),
