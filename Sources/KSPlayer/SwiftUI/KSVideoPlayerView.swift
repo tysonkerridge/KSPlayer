@@ -360,6 +360,10 @@ struct VideoControllerView: View {
     fileprivate var volumeSliderSize: Double?
     @State
     private var showVideoSetting = false
+    @State
+    private var showSubtitlePicker = false
+    @State
+    private var showPlaybackRatePicker = false
     @Environment(\.dismiss)
     private var dismiss
     public var body: some View {
@@ -393,9 +397,7 @@ struct VideoControllerView: View {
                     contentModeButton
                         .frame(width: 56)
                     subtitleButton
-                        .buttonStyle(.plain)
                     playbackRateButton
-                        .buttonStyle(.plain)
                     pipButton
                         .frame(width: 56)
                     infoButton
@@ -452,6 +454,65 @@ struct VideoControllerView: View {
         .sheet(isPresented: $showVideoSetting) {
             VideoSettingView(config: config, subtitleModel: config.subtitleModel, subtitleTitle: title)
         }
+        #if os(tvOS)
+        .sheet(isPresented: $showSubtitlePicker) {
+            NavigationStack {
+                List {
+                    Button {
+                        config.subtitleModel.selectedSubtitleInfo = nil
+                        showSubtitlePicker = false
+                    } label: {
+                        HStack {
+                            Text("Off")
+                            Spacer()
+                            if config.subtitleModel.selectedSubtitleInfo == nil {
+                                Image(systemName: "checkmark")
+                            }
+                        }
+                    }
+                    ForEach(config.subtitleModel.subtitleInfos, id: \.subtitleID) { info in
+                        Button {
+                            config.subtitleModel.selectedSubtitleInfo = info
+                            if let track = info as? MediaPlayerTrack {
+                                config.playerLayer?.player.select(track: track)
+                            }
+                            showSubtitlePicker = false
+                        } label: {
+                            HStack {
+                                Text(info.name)
+                                Spacer()
+                                if config.subtitleModel.selectedSubtitleInfo?.subtitleID == info.subtitleID {
+                                    Image(systemName: "checkmark")
+                                }
+                            }
+                        }
+                    }
+                }
+                .navigationTitle("Subtitle")
+            }
+        }
+        .sheet(isPresented: $showPlaybackRatePicker) {
+            NavigationStack {
+                List {
+                    ForEach([0.5, 1.0, 1.25, 1.5, 2.0] as [Float], id: \.self) { rate in
+                        Button {
+                            config.playbackRate = rate
+                            showPlaybackRatePicker = false
+                        } label: {
+                            HStack {
+                                Text("\(rate, specifier: "%.2f") x")
+                                Spacer()
+                                if config.playbackRate == rate {
+                                    Image(systemName: "checkmark")
+                                }
+                            }
+                        }
+                    }
+                }
+                .navigationTitle("Playback Speed")
+            }
+        }
+        #endif
     }
 
     private var muteButton: some View {
@@ -498,11 +559,27 @@ struct VideoControllerView: View {
     }
 
     private var subtitleButton: some View {
+        #if os(tvOS)
+        Button {
+            showSubtitlePicker = true
+        } label: {
+            Image(systemName: "captions.bubble.fill")
+        }
+        #else
         KSVideoPlayerViewBuilder.subtitleButton(config: config)
+        #endif
     }
 
     private var playbackRateButton: some View {
+        #if os(tvOS)
+        Button {
+            showPlaybackRatePicker = true
+        } label: {
+            Image(systemName: "speedometer")
+        }
+        #else
         KSVideoPlayerViewBuilder.playbackRateButton(playbackRate: $config.playbackRate)
+        #endif
     }
 
     private var pipButton: some View {
