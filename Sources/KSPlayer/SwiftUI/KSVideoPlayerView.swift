@@ -393,7 +393,9 @@ struct VideoControllerView: View {
                     contentModeButton
                         .frame(width: 56)
                     subtitleButton
+                        .buttonStyle(.plain)
                     playbackRateButton
+                        .buttonStyle(.plain)
                     pipButton
                         .frame(width: 56)
                     infoButton
