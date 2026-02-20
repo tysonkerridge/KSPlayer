@@ -364,6 +364,8 @@ struct VideoControllerView: View {
     private var showSubtitlePicker = false
     @State
     private var showPlaybackRatePicker = false
+    @State
+    private var showAudioPicker = false
     @Environment(\.dismiss)
     private var dismiss
     public var body: some View {
@@ -512,6 +514,29 @@ struct VideoControllerView: View {
                 .navigationTitle("Playback Speed")
             }
         }
+        .sheet(isPresented: $showAudioPicker) {
+            NavigationStack {
+                List {
+                    if let audioTracks = config.playerLayer?.player.tracks(mediaType: .audio) {
+                        ForEach(audioTracks, id: \.trackID) { track in
+                            Button {
+                                config.playerLayer?.player.select(track: track)
+                                showAudioPicker = false
+                            } label: {
+                                HStack {
+                                    Text(track.description)
+                                    Spacer()
+                                    if track.isEnabled {
+                                        Image(systemName: "checkmark")
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+                .navigationTitle("Audio Track")
+            }
+        }
         #endif
     }
 
@@ -539,6 +564,13 @@ struct VideoControllerView: View {
     }
 
     private func audioButton(audioTracks: [MediaPlayerTrack]) -> some View {
+        #if os(tvOS)
+        Button {
+            showAudioPicker = true
+        } label: {
+            Image(systemName: "waveform.circle.fill")
+        }
+        #else
         MenuView(selection: Binding {
             audioTracks.first { $0.isEnabled }?.trackID
         } set: { value in
@@ -556,6 +588,7 @@ struct VideoControllerView: View {
                 .clipShape(Circle())
             #endif
         }
+        #endif
     }
 
     private var subtitleButton: some View {
