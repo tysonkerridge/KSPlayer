@@ -245,7 +245,7 @@ public class PlayerToolBar: UIStackView {
             } else if previouslyFocusedItem.isHighlighted {
                 previouslyFocusedItem.tintColor = previouslyFocusedItem.titleColor(for: .highlighted)
             } else {
-                previouslyFocusedItem.tintColor = previouslyFocusedItem.titleColor(for: .normal)
+                previouslyFocusedItem.tintColor = .white
             }
         }
     }
