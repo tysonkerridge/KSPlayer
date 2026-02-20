@@ -109,7 +109,7 @@ public class PlayerToolBar: UIStackView {
 
     private func initUI() {
         let focusColor = UIColor.white
-        let tintColor = UIColor.gray
+        let tintColor = UIColor.white
         distribution = .fill
         currentTimeLabel.textColor = UIColor(rgb: 0x9B9B9B)
         currentTimeLabel.font = UIFont.monospacedDigitSystemFont(ofSize: 14, weight: .regular)
@@ -186,14 +186,14 @@ public class PlayerToolBar: UIStackView {
         audioSwitchButton.fillImage()
         videoSwitchButton.fillImage()
         playbackRateButton.fillImage()
-        playButton.tintColor = tintColor
-        playbackRateButton.tintColor = tintColor
-        definitionButton.tintColor = tintColor
-        audioSwitchButton.tintColor = tintColor
-        videoSwitchButton.tintColor = tintColor
-        srtButton.tintColor = tintColor
-        pipButton.tintColor = tintColor
-        timeSlider.tintColor = tintColor
+        playButton.tintColor = .white
+        playbackRateButton.tintColor = .white
+        definitionButton.tintColor = .white
+        audioSwitchButton.tintColor = .white
+        videoSwitchButton.tintColor = .white
+        srtButton.tintColor = .white
+        pipButton.tintColor = .white
+        timeSlider.tintColor = .white
         NSLayoutConstraint.activate([
             playButton.widthAnchor.constraint(equalTo: playButton.heightAnchor),
             playbackRateButton.widthAnchor.constraint(equalTo: playbackRateButton.heightAnchor),
