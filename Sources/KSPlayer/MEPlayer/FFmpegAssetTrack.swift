@@ -69,24 +69,34 @@ public class FFmpegAssetTrack: MediaPlayerTrack {
     }
 
     convenience init?(stream: UnsafeMutablePointer<AVStream>) {
-        let codecpar = stream.pointee.codecpar.pointee
+        let streamValue = stream.pointee
+        guard let codecparPointer = streamValue.codecpar else {
+            return nil
+        }
+        let codecpar = codecparPointer.pointee
+        guard codecpar.codec_type == AVMEDIA_TYPE_AUDIO || codecpar.codec_type == AVMEDIA_TYPE_VIDEO || codecpar.codec_type == AVMEDIA_TYPE_SUBTITLE else {
+            return nil
+        }
+        guard codecpar.codec_id != AV_CODEC_ID_NONE else {
+            return nil
+        }
         self.init(codecpar: codecpar)
         self.stream = stream
-        let metadata = toDictionary(stream.pointee.metadata)
+        let metadata = toDictionary(streamValue.metadata)
         if let value = metadata["variant_bitrate"] ?? metadata["BPS"], let bitRate = Int64(value) {
             self.bitRate = bitRate
         }
-        trackID = stream.pointee.index
-        var timebase = Timebase(stream.pointee.time_base)
+        trackID = streamValue.index
+        var timebase = Timebase(streamValue.time_base)
         if timebase.num <= 0 || timebase.den <= 0 {
             timebase = Timebase(num: 1, den: 1000)
         }
-        if stream.pointee.start_time != Int64.min {
-            startTime = timebase.cmtime(for: stream.pointee.start_time)
+        if streamValue.start_time != Int64.min {
+            startTime = timebase.cmtime(for: streamValue.start_time)
         }
         self.timebase = timebase
-        avgFrameRate = Timebase(stream.pointee.avg_frame_rate)
-        realFrameRate = Timebase(stream.pointee.r_frame_rate)
+        avgFrameRate = Timebase(streamValue.avg_frame_rate)
+        realFrameRate = Timebase(streamValue.r_frame_rate)
         if mediaType == .audio {
             var frameSize = codecpar.frame_size
             if frameSize < 1 {
@@ -94,8 +104,8 @@ public class FFmpegAssetTrack: MediaPlayerTrack {
             }
             nominalFrameRate = max(Float(codecpar.sample_rate / frameSize), 48)
         } else {
-            if stream.pointee.duration > 0, stream.pointee.nb_frames > 0, stream.pointee.nb_frames != stream.pointee.duration {
-                nominalFrameRate = Float(stream.pointee.nb_frames) * Float(timebase.den) / Float(stream.pointee.duration) * Float(timebase.num)
+            if streamValue.duration > 0, streamValue.nb_frames > 0, streamValue.nb_frames != streamValue.duration {
+                nominalFrameRate = Float(streamValue.nb_frames) * Float(timebase.den) / Float(streamValue.duration) * Float(timebase.num)
             } else if avgFrameRate.den > 0, avgFrameRate.num > 0 {
                 nominalFrameRate = Float(avgFrameRate.num) / Float(avgFrameRate.den)
             } else {
@@ -115,8 +125,8 @@ public class FFmpegAssetTrack: MediaPlayerTrack {
         }
         // AV_DISPOSITION_DEFAULT
         if mediaType == .subtitle {
-            isEnabled = !isImageSubtitle || stream.pointee.disposition & AV_DISPOSITION_FORCED == AV_DISPOSITION_FORCED
-            if stream.pointee.disposition & AV_DISPOSITION_HEARING_IMPAIRED == AV_DISPOSITION_HEARING_IMPAIRED {
+            isEnabled = !isImageSubtitle || streamValue.disposition & AV_DISPOSITION_FORCED == AV_DISPOSITION_FORCED
+            if streamValue.disposition & AV_DISPOSITION_HEARING_IMPAIRED == AV_DISPOSITION_HEARING_IMPAIRED {
                 name += "(hearing impaired)"
             }
         }
@@ -131,12 +141,13 @@ public class FFmpegAssetTrack: MediaPlayerTrack {
         let codecType = codecpar.codec_id.mediaSubType
         var codecName = ""
         if let descriptor = avcodec_descriptor_get(codecpar.codec_id) {
-            codecName += String(cString: descriptor.pointee.name)
-            if let profile = descriptor.pointee.profiles {
-                codecName += " (\(String(cString: profile.pointee.name)))"
+            if let descriptorName = descriptor.pointee.name {
+                codecName += String(cString: descriptorName)
             }
-        } else {
-            codecName = ""
+            if let profiles = descriptor.pointee.profiles,
+               let profileName = profiles.pointee.name {
+                codecName += " (\(String(cString: profileName)))"
+            }
         }
         self.codecName = codecName
         fieldOrder = FFmpegFieldOrder(rawValue: UInt8(codecpar.field_order.rawValue)) ?? .unknown
@@ -161,13 +172,17 @@ public class FFmpegAssetTrack: MediaPlayerTrack {
         } else if codecpar.codec_type == AVMEDIA_TYPE_VIDEO {
             audioDescriptor = nil
             mediaType = .video
-            if codecpar.nb_coded_side_data > 0, let sideDatas = codecpar.coded_side_data {
+            let codedSideDataCount = Int(codecpar.nb_coded_side_data)
+            if codedSideDataCount > 0, codedSideDataCount <= 128, let sideDatas = codecpar.coded_side_data {
                 for i in 0 ..< codecpar.nb_coded_side_data {
                     let sideData = sideDatas[Int(i)]
+                    guard let sideDataValue = sideData.data else {
+                        continue
+                    }
                     if sideData.type == AV_PKT_DATA_DOVI_CONF {
-                        dovi = sideData.data.withMemoryRebound(to: DOVIDecoderConfigurationRecord.self, capacity: 1) { $0 }.pointee
+                        dovi = sideDataValue.withMemoryRebound(to: DOVIDecoderConfigurationRecord.self, capacity: 1) { $0 }.pointee
                     } else if sideData.type == AV_PKT_DATA_DISPLAYMATRIX {
-                        let matrix = sideData.data.withMemoryRebound(to: Int32.self, capacity: 1) { $0 }
+                        let matrix = sideDataValue.withMemoryRebound(to: Int32.self, capacity: 1) { $0 }
                         rotation = Int16(Int(-av_display_rotation_get(matrix)) % 360)
                     }
                 }
@@ -176,7 +191,7 @@ public class FFmpegAssetTrack: MediaPlayerTrack {
             var extradataSize = Int32(0)
             var extradata = codecpar.extradata
             let atomsData: Data?
-            if let extradata {
+            if let extradata, codecpar.extradata_size > 0, codecpar.extradata_size <= 4 * 1024 * 1024 {
                 extradataSize = codecpar.extradata_size
                 if extradataSize >= 5, extradata[4] == 0xFE {
                     extradata[4] = 0xFF

@@ -333,17 +333,22 @@ extension MEPlayerItem {
         audioTrack = nil
         videoAudioTracks.removeAll()
         assetTracks = (0 ..< Int(formatCtx.pointee.nb_streams)).compactMap { i in
-            if let coreStream = formatCtx.pointee.streams[i] {
-                coreStream.pointee.discard = AVDISCARD_ALL
-                if let assetTrack = FFmpegAssetTrack(stream: coreStream) {
-                    if assetTrack.mediaType == .subtitle {
-                        let subtitle = SyncPlayerItemTrack<SubtitleFrame>(mediaType: .subtitle, frameCapacity: 255, options: options)
-                        assetTrack.subtitle = subtitle
-                        allPlayerItemTracks.append(subtitle)
-                    }
-                    assetTrack.seekByBytes = seekByBytes
-                    return assetTrack
+            guard let coreStream = formatCtx.pointee.streams[i] else {
+                return nil
+            }
+            guard coreStream.pointee.codecpar != nil else {
+                KSLog(level: .warning, "Skip stream \(i): codecpar is nil")
+                return nil
+            }
+            coreStream.pointee.discard = AVDISCARD_ALL
+            if let assetTrack = FFmpegAssetTrack(stream: coreStream) {
+                if assetTrack.mediaType == .subtitle {
+                    let subtitle = SyncPlayerItemTrack<SubtitleFrame>(mediaType: .subtitle, frameCapacity: 255, options: options)
+                    assetTrack.subtitle = subtitle
+                    allPlayerItemTracks.append(subtitle)
                 }
+                assetTrack.seekByBytes = seekByBytes
+                return assetTrack
             }
             return nil
         }
