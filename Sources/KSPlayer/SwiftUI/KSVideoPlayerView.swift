@@ -11,10 +11,10 @@ import SwiftUI
 public extension View {
     @ViewBuilder
     func KSGlassEffect(cornerRadius: CGFloat = 20, blurRadius: CGFloat = 18, strokeOpacity: CGFloat = 0.25) -> some View {
-        if #available(iOS 26, *) {
+        if #available(iOS 26, tvOS 26.0, *) {
             self.glassEffect(.clear)
         } else {
-            if #available(iOS 15.0, *) {
+            if #available(iOS 15.0, tvOS 15.0, *) {
                 self
                     .background {
                         RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)

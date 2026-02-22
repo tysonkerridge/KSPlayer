@@ -18,7 +18,7 @@ enum KSVideoPlayerViewBuilder {
             playButton(config: config)
             forwardButton(config: config)
             #else
-            if #available(iOS 26.0, *) {
+            if #available(iOS 26.0, tvOS 26.0, *) {
                 Spacer()
                 GlassEffectContainer(spacing: spacing) {
                     HStack(spacing: -10) {
