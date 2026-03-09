@@ -149,7 +149,7 @@ enum KSVideoPlayerViewBuilder {
 #endif
         }
         .padding(12)
-        .KSGlassEffect()
+//        .KSGlassEffect()
     }
 
     static func infoButton(showVideoSetting: Binding<Bool>) -> some View {
