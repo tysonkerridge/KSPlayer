@@ -181,7 +181,8 @@ public struct KSVideoPlayerView: View {
                 playerCoordinator.isMaskShow = true
             }
         #endif
-            .ignoresSafeArea(.all, edges: playerCoordinator.isFullscreen ? .all : .horizontal)
+            .ignoresSafeArea()
+            //.ignoresSafeArea(.all, edges: playerCoordinator.isFullscreen ? .all : .horizontal)
             .onAppear {
                 focusableField = .play
                 if let subtitleDataSouce {
@@ -692,16 +693,16 @@ struct VideoControllerView: View {
         }
     }
     
-    private var fullscreenButton: some View {
-        Button {
-            config.isFullscreen.toggle()
-        } label: {
-            Image(systemName: config.isFullscreen ? "arrow.down.right.and.arrow.up.left.rectangle" : "arrow.up.left.and.arrow.down.right.rectangle")
-                .foregroundColor(.white)
-                .fontWeight(.bold)
-                .font(.title2)
-        }
-    }
+//    private var fullscreenButton: some View {
+//        Button {
+//            config.isFullscreen.toggle()
+//        } label: {
+//            Image(systemName: config.isFullscreen ? "arrow.down.right.and.arrow.up.left.rectangle" : "arrow.up.left.and.arrow.down.right.rectangle")
+//                .foregroundColor(.white)
+//                .fontWeight(.bold)
+//                .font(.title2)
+//        }
+//    }
 
     private var infoButton: some View {
         KSVideoPlayerViewBuilder.infoButton(showVideoSetting: $showVideoSetting)

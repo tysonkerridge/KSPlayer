@@ -10,6 +10,7 @@ public class EmptySubtitleInfo: SubtitleInfo {
     public var isEnabled: Bool = true
     public let subtitleID: String = ""
     public var delay: TimeInterval = 0
+    public var languageCode: String?
     public let name = NSLocalizedString("no show subtitle", comment: "")
     public func search(for _: TimeInterval) -> [SubtitlePart] {
         []
@@ -29,6 +30,7 @@ public class URLSubtitleInfo: KSSubtitle, SubtitleInfo {
 
     public private(set) var downloadURL: URL
     public var delay: TimeInterval = 0
+    public var languageCode: String?
     public private(set) var name: String
     public let subtitleID: String
     public var comment: String?
