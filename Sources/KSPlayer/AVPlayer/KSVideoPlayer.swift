@@ -218,42 +218,87 @@ extension KSVideoPlayer: UIViewRepresentable {
 }
 
 extension KSVideoPlayer.Coordinator: KSPlayerLayerDelegate {
+    
     public func player(layer: KSPlayerLayer, state: KSPlayerState) {
-        onStateChanged?(layer, state)
-        if state == .readyToPlay {
-            playbackRate = layer.player.playbackRate
-            if let subtitleDataSouce = layer.player.subtitleDataSouce {
-                // 要延后增加内嵌字幕。因为有些内嵌字幕是放在视频流的。所以会比readyToPlay回调晚。
-                DispatchQueue.main.asyncAfter(deadline: DispatchTime.now() + 1) { [weak self] in
-                    guard let self else { return }
-                    self.subtitleModel.addSubtitle(dataSouce: subtitleDataSouce)
-                    if self.subtitleModel.selectedSubtitleInfo == nil, layer.options.autoSelectEmbedSubtitle {
-                        self.subtitleModel.selectedSubtitleInfo = subtitleDataSouce.infos.first { $0.isEnabled }
+        // Defer the state update to the next main thread run loop
+        // to prevent SwiftUI view update collisions.
+        DispatchQueue.main.async { [weak self] in
+            guard let self else { return }
+            
+            self.onStateChanged?(layer, state)
+            
+            if state == .readyToPlay {
+                self.playbackRate = layer.player.playbackRate
+                if let subtitleDataSouce = layer.player.subtitleDataSouce {
+                    // 要延后增加内嵌字幕。因为有些内嵌字幕是放在视频流的。所以会比readyToPlay回调晚。
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 1) { [weak self] in
+                        guard let self else { return }
+                        self.subtitleModel.addSubtitle(dataSouce: subtitleDataSouce)
+                        if self.subtitleModel.selectedSubtitleInfo == nil, layer.options.autoSelectEmbedSubtitle {
+                            self.subtitleModel.selectedSubtitleInfo = subtitleDataSouce.infos.first { $0.isEnabled }
+                        }
                     }
                 }
+            } else if state == .bufferFinished {
+                self.isMaskShow = false
+            } else {
+                self.isMaskShow = true
+#if canImport(UIKit)
+                if state == .preparing, let view = layer.player.view {
+                    let swipeDown = UISwipeGestureRecognizer(target: self, action: #selector(self.swipeGestureAction(_:)))
+                    swipeDown.direction = .down
+                    view.addGestureRecognizer(swipeDown)
+                    let swipeLeft = UISwipeGestureRecognizer(target: self, action: #selector(self.swipeGestureAction(_:)))
+                    swipeLeft.direction = .left
+                    view.addGestureRecognizer(swipeLeft)
+                    let swipeRight = UISwipeGestureRecognizer(target: self, action: #selector(self.swipeGestureAction(_:)))
+                    swipeRight.direction = .right
+                    view.addGestureRecognizer(swipeRight)
+                    let swipeUp = UISwipeGestureRecognizer(target: self, action: #selector(self.swipeGestureAction(_:)))
+                    swipeUp.direction = .up
+                    view.addGestureRecognizer(swipeUp)
+                }
+#endif
             }
-        } else if state == .bufferFinished {
-            isMaskShow = false
-        } else {
-            isMaskShow = true
-            #if canImport(UIKit)
-            if state == .preparing, let view = layer.player.view {
-                let swipeDown = UISwipeGestureRecognizer(target: self, action: #selector(swipeGestureAction(_:)))
-                swipeDown.direction = .down
-                view.addGestureRecognizer(swipeDown)
-                let swipeLeft = UISwipeGestureRecognizer(target: self, action: #selector(swipeGestureAction(_:)))
-                swipeLeft.direction = .left
-                view.addGestureRecognizer(swipeLeft)
-                let swipeRight = UISwipeGestureRecognizer(target: self, action: #selector(swipeGestureAction(_:)))
-                swipeRight.direction = .right
-                view.addGestureRecognizer(swipeRight)
-                let swipeUp = UISwipeGestureRecognizer(target: self, action: #selector(swipeGestureAction(_:)))
-                swipeUp.direction = .up
-                view.addGestureRecognizer(swipeUp)
-            }
-            #endif
         }
     }
+    
+//    public func player(layer: KSPlayerLayer, state: KSPlayerState) {
+//        onStateChanged?(layer, state)
+//        if state == .readyToPlay {
+//            playbackRate = layer.player.playbackRate
+//            if let subtitleDataSouce = layer.player.subtitleDataSouce {
+//                // 要延后增加内嵌字幕。因为有些内嵌字幕是放在视频流的。所以会比readyToPlay回调晚。
+//                DispatchQueue.main.asyncAfter(deadline: DispatchTime.now() + 1) { [weak self] in
+//                    guard let self else { return }
+//                    self.subtitleModel.addSubtitle(dataSouce: subtitleDataSouce)
+//                    if self.subtitleModel.selectedSubtitleInfo == nil, layer.options.autoSelectEmbedSubtitle {
+//                        self.subtitleModel.selectedSubtitleInfo = subtitleDataSouce.infos.first { $0.isEnabled }
+//                    }
+//                }
+//            }
+//        } else if state == .bufferFinished {
+//            isMaskShow = false
+//        } else {
+//            isMaskShow = true
+//            #if canImport(UIKit)
+//            if state == .preparing, let view = layer.player.view {
+//                let swipeDown = UISwipeGestureRecognizer(target: self, action: #selector(swipeGestureAction(_:)))
+//                swipeDown.direction = .down
+//                view.addGestureRecognizer(swipeDown)
+//                let swipeLeft = UISwipeGestureRecognizer(target: self, action: #selector(swipeGestureAction(_:)))
+//                swipeLeft.direction = .left
+//                view.addGestureRecognizer(swipeLeft)
+//                let swipeRight = UISwipeGestureRecognizer(target: self, action: #selector(swipeGestureAction(_:)))
+//                swipeRight.direction = .right
+//                view.addGestureRecognizer(swipeRight)
+//                let swipeUp = UISwipeGestureRecognizer(target: self, action: #selector(swipeGestureAction(_:)))
+//                swipeUp.direction = .up
+//                view.addGestureRecognizer(swipeUp)
+//            }
+//            #endif
+//        }
+//    }
 
     public func player(layer _: KSPlayerLayer, currentTime: TimeInterval, totalTime: TimeInterval) {
         onPlay?(currentTime, totalTime)
