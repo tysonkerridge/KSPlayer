@@ -82,7 +82,11 @@ public struct KSVideoPlayerView: View {
             }
         }
         .preferredColorScheme(.dark)
+        #if os(tvOS)
+        .tint(.primary)
+        #else
         .tint(.white)
+        #endif
         .persistentSystemOverlays(.hidden)
         .toolbar(.hidden, for: .automatic)
         #if os(tvOS)
